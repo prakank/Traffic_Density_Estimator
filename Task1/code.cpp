@@ -39,17 +39,28 @@ void onMouse(int event, int x, int y, int flags, void* params) {
 int main() {
 
 	string path = "/home/prakank/opencv_test/learn_opencv/Resources/empty.jpg";
-	Mat img, imgWarp, matrix;
+	Mat img, imgWarp, matrix, img_temp;
 	img = imread(path);
+	img_temp = imread(path);
 	if (img.empty()) {
 		cout << "Image not found or unable to load";
 		return -1;
 	}
 	cvtColor(img, img, COLOR_BGR2GRAY);
+	cvtColor(img_temp, img_temp, COLOR_BGR2GRAY);
 	imshow("Image", img);
 
 	if (i < 4)setMouseCallback("Image", onMouse, reinterpret_cast<void*>(&img));
+	int j = 0;
 	while (i != 4) {
+		if (j != i) {
+
+			destroyWindow("Image");
+			circle(img, src[j], 10, Scalar(0, 0, 255), FILLED);
+			imshow("Image", img);
+			j = i;
+			if (i < 4)setMouseCallback("Image", onMouse, reinterpret_cast<void*>(&img));
+		}
 		waitKey(100);
 	}
 
@@ -65,7 +76,7 @@ int main() {
 		dst[2] = {0.0f, h};
 		dst[3] = {w, h};
 		matrix = getPerspectiveTransform(src, dst);
-		warpPerspective(img, imgWarp, matrix, Point(w, h));
+		warpPerspective(img_temp, imgWarp, matrix, Point(w, h));
 
 		for (int i = 0; i < 4; i++)
 		{
