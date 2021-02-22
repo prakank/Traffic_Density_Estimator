@@ -55,14 +55,13 @@ int main() {
 	int j = 0;
 	while (i != 4) {
 		if (j != i) {
-
 			destroyWindow("Image");
 			circle(img, src[j], 10, Scalar(0, 0, 255), FILLED);
 			imshow("Image", img);
 			j = i;
 			if (i < 4)setMouseCallback("Image", onMouse, reinterpret_cast<void*>(&img));
 		}
-		waitKey(100);
+		waitKey(1);
 	}
 
 	if (i == 4) {
