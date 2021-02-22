@@ -38,7 +38,8 @@ void onMouse(int event, int x, int y, int flags, void* params) {
 
 int main() {
 
-	string path = "/home/prakank/opencv_test/learn_opencv/Resources/empty.jpg";
+	// string path = "/home/prakank/opencv_test/learn_opencv/Resources/cards.jpg";
+	string path = "cards.jpg";
 	Mat img, imgWarp, matrix, img_temp;
 	img = imread(path);
 	img_temp = imread(path);
@@ -85,8 +86,8 @@ int main() {
 		}
 		destroyWindow("Image");
 		imshow("Points Selected", img);
-		// resize(imgWarp, imgWarp, Size(imgWarp.cols * 0.95, imgWarp.rows * 0.85));
-		resizeWindow("Final Image", img.cols, img.rows * 0.8);
+		resize(imgWarp, imgWarp, Size(imgWarp.cols * 0.85, imgWarp.rows * 0.75));
+		// resizeWindow("Final Image", img.cols, img.rows * 0.8);
 		// namedWindow("Final Image", CV_WINDOW_AUTOSIZE);
 		imshow("Final Image", imgWarp);
 	}
