@@ -12,7 +12,7 @@ make all
 ```sh
 ./code imagefile.xyz
 ```
-* To remove executable binary
+* To remove executable binary and generated images
 ```sh
 make clean
 ```
