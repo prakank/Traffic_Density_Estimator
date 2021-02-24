@@ -8,10 +8,12 @@ using namespace std;
 using namespace cv;
 
 Point2f src[4];
-// Point2f src_transformed[4];
+//array of Point2f variables corresponding to points selected in original image
+
 Point2f dst[4];
-// Point2f dst_transformed[4];
-int i = 0;
+//array of Point2f variables corresponding to points selected in transformed image
+
+int i = 0;//counter for mouse clicks
 float w = 0, h = 0; // Width and height of image
 
 float distance_new(Point2f a, Point2f b) {
@@ -23,7 +25,8 @@ void onMouse(int event, int x, int y, int flags, void* params) {
 	// cout << "Hey\n";
 	Mat *img = reinterpret_cast<Mat*>(params);
 	switch (event) {
-
+    
+    //stores information about points if left mouse button is clicked
 	case EVENT_LBUTTONDOWN: {
 
 		if (i < 4)
@@ -43,11 +46,12 @@ int main(int argc, char * argv[]) {
 
 	string path = argv[1];
 	//string path = "empty.jpg";
+    
 	Mat img, imgWarp, matrix, img_temp, img_transformed, img_cropped;
 	img = imread(path);
 	img_temp = imread(path);
 	if (img.empty()) {
-		cout << "Image not found or unable to load\n";
+		cout << "Image not found or unable to load";
 		return -1;
 	}
 
@@ -57,6 +61,8 @@ int main(int argc, char * argv[]) {
 
 	if (i < 4)setMouseCallback("Image", onMouse, reinterpret_cast<void*>(&img));
 	int j = 0;
+    
+    //marking points as they are being selected
 	while (i != 4) {
 		if (j != i) {
 
@@ -70,6 +76,7 @@ int main(int argc, char * argv[]) {
 	}
 
 	if (i == 4) {
+        
 
 		w = distance_new(src[0], src[1]) + distance_new(src[2], src[3]);
 		w /= 2;
@@ -81,6 +88,8 @@ int main(int argc, char * argv[]) {
 		dst[2] = {472, 1030};
 		dst[3] = {950, 1030};
 		matrix = getPerspectiveTransform(src, dst);
+        //Homography matrix corresponding to src-->dst mapping
+        
 		warpPerspective(img_temp, imgWarp, matrix, img_temp.size());
 
 		Rect road(472,52, 478, 978);
@@ -88,11 +97,15 @@ int main(int argc, char * argv[]) {
 
 		destroyWindow("Image");
 		// imshow("Points Selected", img);
+        
 		imshow("Projected Image", imgWarp);
 		imwrite("Projected Image.jpg", imgWarp);
+        //displays and saves transformed uncropped image stored in imgWarp
+        
 		waitKey(0);
 		imshow("Cropped Image", img_cropped);
 		imwrite("Cropped Image.jpg", img_cropped);
+        //displays and saves transformed cropped image stored in imgWarp
 	}
 
 	waitKey(0);
