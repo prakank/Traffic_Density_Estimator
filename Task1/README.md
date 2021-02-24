@@ -4,7 +4,7 @@ The given assignment is intended to output a transformed perspective image and i
 
 ### How to use?
 
-* Compile the code.cpp using the command
+* Compile the code.cpp file using the command
 ```sh
 make all
 ```
