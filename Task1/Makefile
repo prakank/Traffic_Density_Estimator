@@ -10,6 +10,8 @@ all: $(TARGET).cpp
 
 clean:
 	rm -rf $(TARGET)
+	rm -rf "Cropped Image.jpg"
+	rm -rf "Projected Image.jpg"
 
 help:
 	@echo "usage: make <command>"
