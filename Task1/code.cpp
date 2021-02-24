@@ -51,7 +51,7 @@ int main(int argc, char * argv[]) {
 	img = imread(path);
 	img_temp = imread(path);
 	if (img.empty()) {
-		cout << "Image not found or unable to load";
+		cout << "Image not found or unable to load\n";
 		return -1;
 	}
 
