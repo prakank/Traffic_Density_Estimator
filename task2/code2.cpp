@@ -115,7 +115,7 @@ int main(int argc, char* argv[]){
         if (frame.empty()) break;      
         warpPerspective(frame, frame_warped, matrix, frame.size());
         frame_cropped = frame_warped(road);      
-        // imshow("Cropped_frame", frame_cropped);    
+        imshow("Cropped_frame", frame_cropped);    
         frame_next = frame_cropped.clone();
         
         // Here goes the Optical Flow part vvv
@@ -139,7 +139,7 @@ int main(int argc, char* argv[]){
         merge(_hsv, 3, hsv);
         hsv.convertTo(hsv8, CV_8U, 255.0);
         cvtColor(hsv8, bgr, COLOR_HSV2BGR);
-        // imshow("frame2", bgr);
+        imshow("frame2", bgr);
 
         float threshold = 20;
         float count=0;
