@@ -1,5 +1,6 @@
 #include<opencv2/opencv.hpp>
 #include<iostream>
+#include<fstream>
 using namespace std;
 using namespace cv;
 
@@ -12,9 +13,6 @@ Point2f dst[4];
 
 int i = 0;
 int w = 0, h = 0;
-
-int erosion_size = 5;
-int dilation_size = 5;
 
 const char* params
     = "{ help h         |           | Print usage }"
@@ -58,17 +56,7 @@ int main(int argc, char* argv[]){
     
     char c;
 
-    Mat frame, frame_temp, frame_cropped, frame_warped, matrix, ref_frame, ref_frame_cropped, ref_frame_warped, diff_frame, diff_frame_thresh, dilation_dst, blur_dst, diff_dst, normalize_dst;
-    Mat fgMask;
-    
-    Mat element = getStructuringElement( MORPH_RECT,
-                         Size( 2*erosion_size + 1, 2*erosion_size+1 ),
-                         Point( erosion_size, erosion_size ) );
-    
-    
-    Ptr<BackgroundSubtractor> pBackSub;
-    pBackSub = createBackgroundSubtractorMOG2();
-    //pBackSub = createBackgroundSubtractorKNN();
+    Mat frame, frame_temp, frame_cropped, frame_warped, matrix, ref_frame, ref_frame_cropped, ref_frame_warped, diff_frame, diff_frame_thresh, blur_dst;
     
     
     
@@ -125,15 +113,6 @@ int main(int argc, char* argv[]){
         
         frame_cropped = frame_warped(road);
         
-        dilate(frame_cropped, dilation_dst, element);
-        medianBlur(dilation_dst, blur_dst, 21);
-        absdiff(frame_cropped, blur_dst, diff_dst);
-        normalize(diff_dst, normalize_dst, 0, 255, NORM_MINMAX, CV_8UC1);
-        
-        
-        
-        //pBackSub->apply(ref_frame_cropped, fgMask);
-        
         // imshow("Points Selected", img);
         
         destroyWindow("frame_temp");
@@ -148,11 +127,18 @@ int main(int argc, char* argv[]){
     
     /*code for processing video frames*/
     
+    //Ptr<BackgroundSubtractor> pBackSub;
+    //pBackSub = createBackgroundSubtractorMOG2();
+    //pBackSub = createBackgroundSubtractorKNN();
+    Mat fgMask;
     int t = 1;
+    string filename = "Density_values2.csv";
+    ofstream outputFile(filename);
+    outputFile<< "Density Values2\n";
     while(t++){
         
-        //cout<<"xxx\n";
         cap>>frame;
+        //pBackSub->apply(frame, fgMask);
         
         if(t%5!=0){
         if(frame.empty()) break;
@@ -162,21 +148,30 @@ int main(int argc, char* argv[]){
         cvtColor(frame, frame, COLOR_BGR2GRAY);
         if (frame.empty()) break;
       
+        float sum = 0;
         warpPerspective(frame, frame_warped, matrix, frame.size());
         frame_cropped = frame_warped(road);
-        //pBackSub->apply(frame_cropped, fgMask);
         
-        dilate(frame_cropped, dilation_dst, element);
-        medianBlur(dilation_dst, blur_dst, 21);
-        absdiff(frame_cropped, blur_dst, diff_dst);
-        normalize(diff_dst, normalize_dst, 0, 255, NORM_MINMAX, CV_8UC1);
+        absdiff(frame_cropped, ref_frame_cropped, diff_frame);
+        threshold(diff_frame, diff_frame_thresh, 40, 127, 0);
+      
+        vector<vector<Point>> contours;
+        vector<Vec4i> hierarchy;
         
-        //absdiff(frame_cropped, ref_frame_cropped, diff_frame);
-        //threshold(diff_frame, diff_frame_thresh, 40, 127, 0);
-      
-      
+        findContours(diff_frame_thresh, contours, hierarchy, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);
 
-        imshow("Cropped_frame", normalize_dst);
+        vector<Rect> boundRect(contours.size());
+        
+        for(int k = 0;k<contours.size();k++){
+            int area = contourArea(contours[k]);
+            sum = sum+area;
+        }
+        
+        outputFile<<sum/(frame_cropped.size().height*frame_cropped.size().width)<<"\n";
+        
+        cout<<sum/(frame_cropped.size().height*frame_cropped.size().width)<<"\n";
+                                     
+        imshow("Cropped_frame", diff_frame_thresh);
     
         //if(t==4855) imwrite("Empty_frame.jpg", frame);
       
@@ -186,8 +181,10 @@ int main(int argc, char* argv[]){
     
         c = (char)waitKey(25);
         if(c == 27) break;
-  }
+    }
 
+    outputFile.close();
+    
     cap.release();
 
     destroyAllWindows();
