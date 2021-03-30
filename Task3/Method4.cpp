@@ -21,9 +21,7 @@ int Progress = 0;
 
 struct Combined{
     int FrameNumber;
-    int PartNumber;
-    int Sum;
-    int Area;
+    float Density;
 };
 
 vector<Combined> v;
@@ -70,9 +68,9 @@ void onMouse(int event, int x, int y, int flags, void* params) {
 	}
 }
 
-void BackgroundSubtraction(Rect part, int PartNumber){
+void BackgroundSubtraction(int ThreadNumber){
 
-    Mat frame, frame_warped, frame_cropped, frame_cropped_subpart, ref_frame_cropped_subpart, diff_frame, diff_frame_thresh;
+    Mat frame, frame_warped, frame_cropped, diff_frame, diff_frame_thresh;
     VideoCapture cap(Video);
     int t = 1;
     while(t++){
@@ -82,16 +80,17 @@ void BackgroundSubtraction(Rect part, int PartNumber){
             continue;
         }
         if (frame.empty()) break;
-        
+
+        int quotient = t/FramesToSkip;
+        if(quotient%NumberOfThreads != (ThreadNumber-1))continue;
+                
         float sum = 0;
-        
+
         cvtColor(frame, frame, COLOR_BGR2GRAY);
         warpPerspective(frame, frame_warped, matrix, frame.size());
         frame_cropped = frame_warped(road);
-        frame_cropped_subpart = frame_cropped(part);
-        ref_frame_cropped_subpart = ref_frame_cropped(part);
-        absdiff(frame_cropped_subpart, ref_frame_cropped_subpart, diff_frame);
-        threshold(diff_frame, diff_frame_thresh, 40, 127, 0);
+        absdiff(frame_cropped, ref_frame_cropped, diff_frame);
+        threshold(diff_frame, diff_frame_thresh, 40, 127, 0);        
         
         vector<vector<Point>> contours;
         vector<Vec4i> hierarchy;
@@ -104,12 +103,13 @@ void BackgroundSubtraction(Rect part, int PartNumber){
             int area = contourArea(contours[k]);
             sum = sum+area;
         }
+
         Combined cd;
-        cd.PartNumber = PartNumber;
         cd.FrameNumber = t;
-        cd.Sum = sum;
-        cd.Area = frame_cropped_subpart.size().height * frame_cropped_subpart.size().width;
+        cd.Density = sum/(frame_cropped.size().height * frame_cropped.size().width);
+        
         v.push_back(cd);
+        
         Esc = (char)waitKey(25);
         if(Esc == 27){cap.release(); destroyAllWindows(); return;}
         
@@ -119,11 +119,12 @@ void BackgroundSubtraction(Rect part, int PartNumber){
 }
 
 void Output(){
-    string filename = "Density_Values_M3_" + to_string(NumberOfThreads) + ".csv";
-    ofstream outputFile(filename);    
-    outputFile << "FrameNumber, PartNumber, Sum, Area\n";
+    string filename = "Density_Values_M4_" + to_string(NumberOfThreads) + ".csv";
+    ofstream outputFile(filename);
+    
+    outputFile << "FrameNumber, Density\n";
     for(int i = 0; i< v.size(); i++){
-        outputFile << i << ", " << v[i].FrameNumber << ", " << v[i].PartNumber << ", " << v[i].Sum << ", " << v[i].Area << "\n";
+        outputFile << i << ", " << v[i].FrameNumber << ", " << v[i].Density << "\n";
     }    
     outputFile.close();
 }
@@ -138,7 +139,7 @@ int main(int argc, char* argv[]){
     auto start = high_resolution_clock::now();
     Video = argv[1];
     // Video = "trafficvideo.mp4";
-    
+
     char c;
     Mat frame, frame_temp, frame_cropped, frame_warped;
         
@@ -191,8 +192,7 @@ int main(int argc, char* argv[]){
         warpPerspective(frame_temp, frame_warped, matrix, frame_temp.size());        
         warpPerspective(ref_frame, ref_frame_warped, matrix, ref_frame.size());        
         ref_frame_cropped = ref_frame_warped(road);        
-        frame_cropped = frame_warped(road);        
-                
+        frame_cropped = frame_warped(road);                        
         destroyWindow("frame_temp");
         
         c = (char)waitKey(25);
@@ -201,20 +201,11 @@ int main(int argc, char* argv[]){
     }
     /*end of code block*/
     
-    cout << "Processing method 3 of 4 ...\n";
+    cout << "Processing method 4 of 4 ...\n";
     vector <thread> threads;
-
+    
     for(int p=0; p < NumberOfThreads; p++){
-        int width = ref_frame_cropped.size().width;
-        int height;
-
-        if(p!=NumberOfThreads-1)height = ref_frame_cropped.size().height/NumberOfThreads;
-        else height = ref_frame_cropped.size().height - p*ref_frame_cropped.size().height/NumberOfThreads;
-
-        Rect cropped_part_split(0, p*ref_frame_cropped.size().height/NumberOfThreads, 478, height);
-
-        // cout << i*ref_frame_cropped.size().height/NumberOfThreads << "    " << height << endl;
-        threads.push_back(thread(BackgroundSubtraction, cropped_part_split, p));
+        threads.push_back(thread(BackgroundSubtraction, p+1));
     }
 
     for(int i=0;i<NumberOfThreads; i++)threads[i].join();
@@ -222,8 +213,9 @@ int main(int argc, char* argv[]){
     auto stop = high_resolution_clock::now();
     auto duration = duration_cast<seconds>(stop - start);
     cout << "Time taken: "<< duration.count() << " seconds" << endl;
-    cout << "Number of threads:" << NumberOfThreads << endl;
-
+    cout << "Number of threads: " << NumberOfThreads << endl;
+    
     Output(); // Write output in a csv file
+    
 
 }
