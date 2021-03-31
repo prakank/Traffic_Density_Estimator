@@ -60,17 +60,6 @@ void Output(string filename){
 }
 
 
-void Output_1(string filename){
-    ofstream outputFile;
-    outputFile.open(filename);    
-    outputFile << "Density Values\n";
-    cout << density_dense.size() << "\n";
-    for(int i = 0; i< density_dense.size(); i++){
-        outputFile << i << ", " << density_dense[i] << "\n";            
-    }    
-    outputFile.close();
-}
-
 int main(int argc, char* argv[]){
     dst[0] = {472, 52};
     dst[1] = {950, 52};
@@ -154,6 +143,7 @@ int main(int argc, char* argv[]){
     destroyWindow("Cropped Frame");
     // cout << "Progress: 0%\n";
 
+    cout << "Processing method 5 of 5 ...\n";
     cout << "Generating Sparse Optical Flow ...\n";
 
     while(t++){  
@@ -227,7 +217,13 @@ int main(int argc, char* argv[]){
     Output("Density_Values_M5.csv");
 
     cap.release();
+    auto stop = high_resolution_clock::now();
+    auto duration = duration_cast<seconds>(stop - start);
+    cout << "Time taken: "<< duration.count() << " seconds" << endl;
     // destroyAllWindows();
+
+    start = high_resolution_clock::now();
+    
 
     VideoCapture cap2(Video);
     t = 1;
@@ -296,6 +292,9 @@ int main(int argc, char* argv[]){
     }
 
     cout << "Completed 100%\n";
+    stop = high_resolution_clock::now();
+    duration = duration_cast<seconds>(stop - start);
+    cout << "Time taken: "<< duration.count() << " seconds" << endl;
 
     ofstream outputFile;
     outputFile.open("Density_Values_Baseline_Dynamic.csv");    

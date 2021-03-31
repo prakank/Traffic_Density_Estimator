@@ -11,7 +11,7 @@ plt.plot(xco, df2["Density Values"]*20)
 plt.xlabel("Time (in seconds)")
 plt.ylabel("Density Values")
 plt.title("Comparison between Sparse and Dense Optical Flow")
-plt.savefig("Sparse_vs_Dense.png")
+plt.savefig("Method_5_Sparse_vs_Dense.png")
 plt.show()
 
 ### ERROR computed for FramesToSkip = 5 is: 

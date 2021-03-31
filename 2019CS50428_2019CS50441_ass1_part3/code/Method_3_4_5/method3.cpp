@@ -12,7 +12,6 @@ using namespace std::chrono;
 
 Mat ref_frame, ref_frame_cropped, ref_frame_warped, matrix;
 vector<float> v1;
-vector<float> v2;
 int NumberOfThreads = 1;
 int FramesToSkip = 5;
 string Video = "";
@@ -27,11 +26,12 @@ struct Combined{
 };
 
 vector<Combined> v;
-
+vector<float> fin;
 Point2f src[4]; //array of Point2f variables corresponding to points selected in original image
 Point2f dst[4]; //array of Point2f variables corresponding to points selected in transformed image
 Rect road(472,52, 478, 978);
-int TotalTimeTaken;
+int TotalTimeTaken1;
+int TotalTimeTaken2;
 int i = 0;
 int w = 0, h = 0;
 char Esc;
@@ -43,6 +43,13 @@ bool is_number(const string& s)
     // if(*it=='-')it++;
     while (it != s.end() && isdigit(*it)) ++it;
     return !s.empty() && it == s.end();
+}
+
+bool Comparator_long(Combined a, Combined b){
+    if(a.FrameNumber < b.FrameNumber) return true;
+    if(a.FrameNumber > b.FrameNumber) return false;
+    if(a.PartNumber < b.PartNumber) return true;
+    return false;
 }
 
 float distance_new(Point2f a, Point2f b) {
@@ -119,19 +126,34 @@ void BackgroundSubtraction(Rect part, int PartNumber){
 }
 
 void Output(){
-    string filename = "Density_Values_M3_" + to_string(NumberOfThreads) +  "_" + to_string(TotalTimeTaken) + ".csv";
+
+    sort(v.begin(), v.end(),Comparator_long);
+
+    string filename = "Density_Values_M3.csv";
     ofstream outputFile(filename);    
-    outputFile << "FrameNumber, PartNumber, Sum, Area\n";
-    for(int i = 0; i< v.size(); i++){
-        outputFile << i << ", " << v[i].FrameNumber << ", " << v[i].PartNumber << ", " << v[i].Sum << ", " << v[i].Area << "\n";
-    }    
+    outputFile << "FrameNumber,Density Values\n";
+    outputFile << NumberOfThreads << ", " << to_string(TotalTimeTaken1) << "_" << to_string(TotalTimeTaken2) << "\n";
+    
+    for(int i=0;i<v.size()/NumberOfThreads;i++){
+        int sum=0;
+        int area=0;
+        for(int j=0;j<NumberOfThreads;j++){
+            int in = i*NumberOfThreads + j;
+            sum+=v[in].Sum;
+            area+=v[in].Area;
+        }
+        float dens = float((float)sum/(float)area);
+        fin.push_back(dens);
+        outputFile << i+1 << "," << dens << "\n";
+    }
+
     outputFile.close();
 }
 
 int main(int argc, char* argv[]){
     
     if(argc != 3){
-        cout << "INVALID INPUT FORMAT\nCORRECT FORMAT: ./M3 <VideoPath> <NumberOfThreads>\n";
+        cout << "INVALID INPUT FORMAT\nCORRECT FORMAT: ./method3 <VideoPath> <NumberOfThreads>\n";
         return -1;
     }
 
@@ -201,7 +223,8 @@ int main(int argc, char* argv[]){
     }
     /*end of code block*/
     
-    cout << "Processing method 3 of 4 ...\n";
+    cout << "\nProcessing method 3 of 5 ...\n";
+    cout << "Generating Queue Density with Number of Threads = " << NumberOfThreads <<" ...\n";
     auto start = high_resolution_clock::now();
     vector <thread> threads;
 
@@ -219,15 +242,100 @@ int main(int argc, char* argv[]){
     }
 
     for(int i=0;i<NumberOfThreads; i++)threads[i].join();
-    cout << "Completed 100%\n";
-    
+    cout << "Completed 100%\n";    
     auto stop = high_resolution_clock::now();
     auto duration = duration_cast<seconds>(stop - start);
-    TotalTimeTaken = duration.count();
+    TotalTimeTaken1 = duration.count();
     
     cout << "Time taken: "<< duration.count() << " seconds" << endl;
-    cout << "Number of threads:" << NumberOfThreads << endl;
 
-    Output(); // Write output in a csv file
+
+    // Below Method is for generating Baseline Queue Values
+
+
+    start = high_resolution_clock::now();
+    VideoCapture cap2(Video);
+    cout<<"\nGenerating Baseline Queue Density ...\n";        
+    bool escaped = false;
+    int t = 1;
+    while(t++){
+
+        // if(t%57 == 0) progress = t*100 /TotalFrames;
+        // if(progress == 0) progress = 1;
+        cout<<"Progress: "<< (int)t*100 /TotalFrames <<"%    "<<'\r'<<flush;
+        
+        cap2 >> frame;
+        
+        if(t%FramesToSkip!=0){
+            if(frame.empty()) break;
+            continue;
+        }
+    
+        cvtColor(frame, frame, COLOR_BGR2GRAY);
+        if (frame.empty()) break;
+      
+        float sum = 0;
+        warpPerspective(frame, frame_warped, matrix, frame.size());
+        frame_cropped = frame_warped(road);
+        
+        Mat diff_frame, diff_frame_thresh;
+        absdiff(frame_cropped, ref_frame_cropped, diff_frame);
+        threshold(diff_frame, diff_frame_thresh, 40, 127, 0);
+      
+        vector<vector<Point>> contours;
+        vector<Vec4i> hierarchy;
+        
+        findContours(diff_frame_thresh, contours, hierarchy, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);
+
+        vector<Rect> boundRect(contours.size());
+        
+        for(int k = 0;k<contours.size();k++){
+            int area = contourArea(contours[k]);
+            sum = sum+area;
+        }
+        
+        v1.push_back(sum/(frame_cropped.size().height*frame_cropped.size().width));
+            
+        c = (char)waitKey(25);
+        if(c == 27){escaped = true; break;}
+    }
+    
+    if(!escaped) cout<<"Completed 100%\n";
+
+    cap.release();
+
+    destroyAllWindows();
+
+    stop = high_resolution_clock::now();
+    duration = duration_cast<seconds>(stop - start);
+    TotalTimeTaken2 = duration.count();
+    cout << "Time taken: "<< TotalTimeTaken2 << " seconds" << endl;
+
+    Output(); // Write output  of Method 3 in a csv file
+    // Called this function later so as to obtain the value of TotalTimeTaken2
+
+    // Write output  of Baseline Queue in a csv file
+    ofstream outputFile;
+    outputFile.open("Density_Values_Baseline_Queue.csv");    
+    outputFile << "Density Values\n";
+    for(int i = 0; i< v1.size(); i++){
+        outputFile << i << ", " << v1[i] << "\n";            
+    }    
+    outputFile.close();
+
+    cout << "\nError Computation ...\n";
+
+    float err=0;
+    float utility=0;
+    for(int i=0;i<min(fin.size(), v1.size());i++){
+        float val = (fin[i] - v1[i])*(fin[i] - v1[i]);
+        err+=val;
+    }
+    err/=min(fin.size(), v1.size());
+    err = sqrt(err);
+    utility = log2(1/err);
+    
+    cout << "RMS Error:" << err << "\n";
+    cout << "Utility (log[1/error]):" << utility << "\n";
 
 }
