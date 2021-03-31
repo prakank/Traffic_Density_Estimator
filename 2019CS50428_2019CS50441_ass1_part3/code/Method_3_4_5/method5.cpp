@@ -20,7 +20,9 @@ int i = 0;
 string Video = "";
 int w = 0, h = 0;
 int FramesToSkip = 5;
-vector<float> density;
+int TotalFrames = 5736;
+vector<float> density_sparse;
+vector<float> density_dense;
 
 float distance_new(Point2f a, Point2f b) {
 	return sqrt( pow((b.x - a.x), 2) + pow((b.y - a.y), 2) );
@@ -47,12 +49,24 @@ void onMouse(int event, int x, int y, int flags, void* params) {
 	}
 }
 
-void Output(){
-    string filename = "Density_Values_M5.csv";
-    ofstream outputFile(filename);    
+void Output(string filename){
+    ofstream outputFile;
+    outputFile.open(filename);    
     outputFile << "Density Values\n";
-    for(int i = 0; i< density.size(); i++){
-        outputFile << i << ", " << density[i] << "\n";
+    for(int i = 0; i< density_sparse.size(); i++){
+        outputFile << i << ", " << density_sparse[i] << "\n";            
+    }    
+    outputFile.close();
+}
+
+
+void Output_1(string filename){
+    ofstream outputFile;
+    outputFile.open(filename);    
+    outputFile << "Density Values\n";
+    cout << density_dense.size() << "\n";
+    for(int i = 0; i< density_dense.size(); i++){
+        outputFile << i << ", " << density_dense[i] << "\n";            
     }    
     outputFile.close();
 }
@@ -83,7 +97,11 @@ int main(int argc, char* argv[]){
     Mat frame, frame_temp, frame_cropped, frame_warped, matrix, frame_prev, frame_next;
     
     cap>>frame_temp;
-    if(frame_temp.empty()) {cap.release(); destroyAllWindows(); return 1;}
+    if(frame_temp.empty()) {
+        cap.release(); 
+        // destroyAllWindows(); 
+        return 1;
+    }
     
     cvtColor(frame_temp, frame_temp, COLOR_BGR2GRAY);
     imshow("frame_temp", frame_temp);
@@ -133,21 +151,27 @@ int main(int argc, char* argv[]){
     }
     
     int t = 1;
+    destroyWindow("Cropped Frame");
+    // cout << "Progress: 0%\n";
+
+    cout << "Generating Sparse Optical Flow ...\n";
 
     while(t++){  
         cap>>frame;
-        
+        cout << "Progress: " << (int)t*100/TotalFrames << "%    " << '\r' << flush;
         if(t%FramesToSkip!=0){
             if(frame.empty()) break;
             continue;
         }
-        if(t==50)destroyWindow("Cropped Frame");
+        // if(t>=50)destroyWindow("Cropped Frame");
         cvtColor(frame, frame, COLOR_BGR2GRAY);
         
+        
+
         if (frame.empty()) break;      
         warpPerspective(frame, frame_warped, matrix, frame.size());
         frame_cropped = frame_warped(road);      
-        imshow("Cropped_frame", frame_cropped);    
+        // imshow("Cropped_frame", frame_cropped);    
         frame_next = frame_cropped.clone();
         
         // Here goes the Optical Flow part vvvv       
@@ -169,7 +193,7 @@ int main(int argc, char* argv[]){
         // cout << p0.size() << endl;
         
         // add(frame_cropped, mask, frame_cropped);
-        imshow("Mask", mask);
+        // imshow("Mask", mask);
         
 
         float threshold = 5;
@@ -186,7 +210,7 @@ int main(int argc, char* argv[]){
             }
         }
         float density_val =  float(count/float(mask.rows*mask.cols));
-        density.pb(density_val);
+        density_sparse.pb(density_val);
 
         // cout << count/float(mask.rows*mask.cols) << "\n";
         mask = Mat::zeros(frame_prev.size(), frame_prev.type());
@@ -196,11 +220,104 @@ int main(int argc, char* argv[]){
         frame_prev = frame_next.clone();
 
     }
+    cout << "Completed 100%\n";
 
-    Output();
+    if(c == 27)return -1;
+
+    Output("Density_Values_M5.csv");
 
     cap.release();
-    destroyAllWindows();
+    // destroyAllWindows();
+
+    VideoCapture cap2(Video);
+    t = 1;
+    vector<float> density_dense;
+
+    cout << "Generating Dense Optical Flow ...\n";
+
+    while(t++){  
+        cap2>>frame;
+        cout << "Progress: " << (int)t*100/TotalFrames << "%    " << '\r' << flush;
+        if(t%FramesToSkip!=0){
+            if(frame.empty()) break;
+            continue;
+        }
+        // if(t==50)destroyWindow("Cropped Frame");
+        cvtColor(frame, frame, COLOR_BGR2GRAY);
+        
+        if (frame.empty()) break;      
+        warpPerspective(frame, frame_warped, matrix, frame.size());
+        frame_cropped = frame_warped(road);      
+        // imshow("Cropped_frame", frame_cropped);    
+        frame_next = frame_cropped.clone();
+        
+        // Here goes the Optical Flow part vvv
+       
+        Mat flow(frame_prev.size(), CV_32FC2);
+        calcOpticalFlowFarneback(frame_prev, frame_next, flow, 0.5, 3, 15, 3, 5, 1.2, 0);
+        
+        Mat flow_parts[2];
+        split(flow, flow_parts);
+        Mat magnitude, angle, magn_norm;
+        cartToPolar(flow_parts[0], flow_parts[1], magnitude, angle, true);
+        normalize(magnitude, magn_norm, 0.0f, 1.0f, NORM_MINMAX);
+        angle *= ((1.f / 360.f) * (180.f / 255.f));
+        //build hsv image
+        Mat _hsv[3], hsv, hsv8, bgr;
+        _hsv[0] = angle;
+        _hsv[1] = Mat::ones(angle.size(), CV_32F);
+        _hsv[2] = magn_norm;
+        merge(_hsv, 3, hsv);
+        hsv.convertTo(hsv8, CV_8U, 255.0);
+        cvtColor(hsv8, bgr, COLOR_HSV2BGR);
+        // imshow("frame2", bgr);
+
+        float threshold = 20;
+        float count=0;
+        Vec3b pixel_values;
+        float value = 0;
+
+        for (int i=0;i<bgr.rows;i++){
+            for(int j=0;j<bgr.cols;j++){
+                pixel_values = bgr.at<Vec3b>(i,j);
+                value = (pixel_values[0] + pixel_values[1] + pixel_values[2])/3;
+                if(value>=threshold)count++;
+                
+            }
+        }
+        float density_val =  float(count/float(bgr.rows*bgr.cols));
+        density_dense.push_back(density_val);
+
+        // Optical Flow part ^^^
+        c = (char)waitKey(25);      
+        if(c == 27) break;
+        frame_prev = frame_next.clone();
+
+    }
+
+    cout << "Completed 100%\n";
+
+    ofstream outputFile;
+    outputFile.open("Density_Values_Baseline_Dynamic.csv");    
+    outputFile << "Density Values\n";    
+    for(int i = 0; i< density_dense.size(); i++){
+        outputFile << i << ", " << density_dense[i] << "\n";            
+    }    
+    outputFile.close();
+    
+    cout << "Computing Error ...\n";
+
+    float err=0;
+    for(int i=0;i<density_dense.size();i++){
+        float val = (density_dense[i] - density_sparse[i])*(density_dense[i] - density_sparse[i]);
+        err+=val;
+    }
+    err/=density_dense.size();
+    err = sqrt(err);
+
+    cout << "RMS Error: " << err << "\n";
+
+    cap2.release();
 
     return 0;
 }
