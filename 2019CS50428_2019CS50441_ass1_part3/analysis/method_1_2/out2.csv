@@ -1,0 +1,7 @@
+Utility,Runtime(in milliseconds),Parameter res(Resolution in p)
+4.52106,23117,144
+5.41892,25681,240
+6.52332,27970,360
+7.3124,31294,480
+7.67786,39610,720
+inf,53719,1080
