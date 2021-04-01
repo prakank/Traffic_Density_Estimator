@@ -1,81 +1,20 @@
-#include<opencv2/opencv.hpp>
-#include<iostream>
-#include<fstream>
-#include<string>
-#include<vector>
-#include<thread>
-#include<chrono>
-using namespace std;
-using namespace cv;
-using namespace std::chrono;
+#include "functions_3_4_5.hpp"
 
-
-Mat ref_frame, ref_frame_cropped, ref_frame_warped, matrix;
-vector<float> v1;
 int NumberOfThreads = 1;
-int FramesToSkip = 5;
-string Video = "";
-int TotalFrames = 5736;
-int Progress = 0;
-
-struct Combined{
-    int FrameNumber;
-    int PartNumber;
-    int Sum;
-    int Area;
-};
-
-vector<Combined> v;
-vector<float> fin;
-Point2f src[4]; //array of Point2f variables corresponding to points selected in original image
-Point2f dst[4]; //array of Point2f variables corresponding to points selected in transformed image
-Rect road(472,52, 478, 978);
 int TotalTimeTaken1;
 int TotalTimeTaken2;
-int i = 0;
-int w = 0, h = 0;
+int Progress = 0;
+
 char Esc;
 bool Escaped = false;
 
-bool is_number(const string& s)
-{
-    string::const_iterator it = s.begin();
-    // if(*it=='-')it++;
-    while (it != s.end() && isdigit(*it)) ++it;
-    return !s.empty() && it == s.end();
-}
+vector<float> fin;
+vector<float> v1;
+vector<Combined_long> v;
 
-bool Comparator_long(Combined a, Combined b){
-    if(a.FrameNumber < b.FrameNumber) return true;
-    if(a.FrameNumber > b.FrameNumber) return false;
-    if(a.PartNumber < b.PartNumber) return true;
-    return false;
-}
-
-float distance_new(Point2f a, Point2f b) {
-	return sqrt( pow((b.x - a.x), 2) + pow((b.y - a.y), 2) );
-}
-
-void onMouse(int event, int x, int y, int flags, void* params) {
-
-	Mat *frame_temp = reinterpret_cast<Mat*>(params);
-	switch (event) {
-
-    //stores information about points if left mouse button is clicked
-	case EVENT_LBUTTONDOWN: {
-
-		if (i < 4)
-		{
-			int px_val = static_cast<int>(frame_temp->at<uchar>(Point(x, y)));
-			cout << "Pixel Value : " << x << ", " << y << "\n";
-			src[i] = Point2f(x, y);
-			i++;
-		}
-
-	} break;
-
-	}
-}
+string Video = "";
+Rect road(472,52, 478, 978);
+Mat ref_frame, ref_frame_cropped, ref_frame_warped, matrix;
 
 void BackgroundSubtraction(Rect part, int PartNumber){
 
@@ -111,7 +50,7 @@ void BackgroundSubtraction(Rect part, int PartNumber){
             int area = contourArea(contours[k]);
             sum = sum+area;
         }
-        Combined cd;
+        Combined_long cd;
         cd.PartNumber = PartNumber;
         cd.FrameNumber = t;
         cd.Sum = sum;
@@ -336,6 +275,31 @@ int main(int argc, char* argv[]){
     utility = log2(1/err);
     
     cout << "RMS Error:" << err << "\n";
-    cout << "Utility (log[1/error]):" << utility << "\n";
+    cout << "Utility (log[1/error]):" << utility << "\n\n";
+
+    string Error = "3, " + to_string(NumberOfThreads) + ", " + to_string(TotalTimeTaken1) + ", " + to_string(err) + ", " + to_string(utility) + "\n";
+    string Baseline_Error = "0, 0, "  + to_string(TotalTimeTaken2) + ", 0, 0\n";
+
+    string out;
+    ifstream read("Error_Utility_3.csv");
+    if(read){
+        vector<string> file; 
+        while(getline(read, out))file.push_back(out);
+        read.close();
+        ofstream outputFile("Error_Utility_3.csv");
+        for(int i=0;i<file.size();i++){
+            outputFile << file[i] << "\n";
+        }
+        outputFile << Error;
+        outputFile << Baseline_Error;
+        outputFile.close();
+    }
+    else{
+        ofstream outputFile("Error_Utility_3.csv");
+        cout << "Method, Threads, Runtime, Error, Utility\n";
+        outputFile << Error;
+        outputFile << Baseline_Error;
+        outputFile.close();
+    }
 
 }
