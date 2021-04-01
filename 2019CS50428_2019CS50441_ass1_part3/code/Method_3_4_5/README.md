@@ -20,17 +20,24 @@ Similarly for execution of method4 binary run
 ```sh
 ./method4 trafficvideo.mp4 4
 ```
+For execution of method5 binary run
+```sh
+./method5 trafficvideo.mp4
+```
 
 ### Plotting graphs
-The images of plots are stored in **Method3_utility.png** and **Method4_utility.png**
+The images of plots are stored in **Method3_utility.png**, **Method4_utility.png** and **Method_5_Sparse_vs_Dense.png**
 
-To get the plot **out1.csv** and **out2.csv**, run
+To get the plot **Error_Utility_3.csv** and **Error_Utility_3.csv**, run
 ```sh
-make plot
+make plot3_utility
+make plot4_utility
 ```
-or
+To get the comparison plots, run
 ```sh
-python3 graph_plot.py
+make plot3
+make plot4
+make plot5
 ```
 
 ### To remove created files/binaries/images
