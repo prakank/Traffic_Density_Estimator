@@ -23,8 +23,6 @@ plt.savefig('method1.png')
 
 plt.show()
 
-plt.waitforbuttonpress()
-plt.cla()
 
 plt.plot(df2["Utility"], df2['Runtime(in milliseconds)'])
 
@@ -39,7 +37,4 @@ plt.ylabel('Runtime(in milliseconds)')
 plt.savefig('method2.png')
 
 plt.show()
-
-plt.waitforbuttonpress()
-plt.cla()
 
