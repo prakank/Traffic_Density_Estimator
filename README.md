@@ -1,46 +1,25 @@
-## Queue Density Estimation Runtime-Utility tradeoff analysis
-In this subtask of assignment 1, we are performing Runtime-Utility tradeoff analysis on a given video of a traffic intersection.
-In the given directory, we have done methods 3, 4 and 5. In method 3 and 4, we vary the number of threads, and in method 5, we compare Sparse Optical Flow with Dense Optical Flow.
+# Traffic Density Estimator
+Traffic Density Estimator: It will take as input a footage of the road and will give a detailed analysis of the static and dynamic data. Along with this, code has been optimized using multi-threading. <br/>
 
-### Inputting Parameters
+Appropriate plots are plotted using python scripts for a better analysis. <br/>
 
-_Method 3 and Method 4:_ The user can input the number of threads required on the console itself. User can change the speed of processing the video (FPS) and total frames of the video in **dependencies_3_4_5.hpp** file. For example, user can change "FramesToSkip" variable in the file.
+Copy the video into the Task3 folder to get the required results. <br/>
 
-_Method 5:_ Similar to Method 3 and 4, user can change the speed of processing the video (FPS) and total number of frames.
+As we progress from Task1 to Task3, the Density Estimator acheives its full implemenation. <br/>
 
-### Compilation and Execution
-For compiling **method3.cpp**, **method4.cpp** and **method5.cpp**, use `make` or ` make all` in the terminal. 
+Problem Statement can be found at this [link] (https://www.cse.iitd.ac.in/~rijurekha/cop290_2021.html)
 
-For execution of method3 binary run(the video filename **trafficvideo.mp4** and number of threads **4** can be different)
-```sh
-./method3 trafficvideo.mp4  4
-```
+## Dependencies
+Make sure that `boost` and `opencv` libraries are installed in the system
 
-Similarly for execution of method4 binary run
-```sh
-./method4 trafficvideo.mp4 4
-```
-For execution of method5 binary run
-```sh
-./method5 trafficvideo.mp4
-```
+## Compilation
+cd to the task you want to try and Run `make` to generate the executable file. (### Make sure traffic footage is copied into that folder)
 
-### Plotting graphs
-The images of plots are stored in **Method3_utility.png**, **Method4_utility.png** and **Method_5_Sparse_vs_Dense.png**
+## Execution
+cd to the task number and Use `make run` to run the program
 
-To get the plot **Error_Utility_3.csv** and **Error_Utility_3.csv**, run
-```sh
-make plot3_utility
-make plot4_utility
-```
-To get the comparison plots, run
-```sh
-make plot3
-make plot4
-make plot5
-```
+## Tasks
+Each task has different way of taking input. Please refer the README.md file in each task for correct input.
 
-### To remove created files/binaries/images
-```sh
-make clean
-```
+## Analysis
+Detailed analysis is performed in Task3 and can be found in the analysis folder. A report is also attached with the analysis folder which contains the conclusion of our analysis.
