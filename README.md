@@ -7,7 +7,7 @@ Copy the video into the Task3 folder to get the required results. <br/>
 
 As we progress from Task1 to Task3, the Density Estimator acheives its full implemenation. <br/>
 
-Problem Statement can be found at this [link] (https://www.cse.iitd.ac.in/~rijurekha/cop290_2021.html)
+Problem Statement can be found at https://www.cse.iitd.ac.in/~rijurekha/cop290_2021.html
 
 ## Dependencies
 Make sure that `boost` and `opencv` libraries are installed in the system
