@@ -4,10 +4,11 @@ Traffic Density Estimator: It will take as input a footage of the road and will 
 Appropriate plots are plotted using python scripts for a better analysis. <br/>
 
 Copy the video into the Task3 folder to get the required results. <br/>
+Sample video can be found at this [link](https://drive.google.com/file/d/1t2IVf9AnqhKL3PeGlqA0zP6UXxFx8POz/view?usp=sharing)
 
 As we progress from Task1 to Task3, the Density Estimator acheives its full implemenation. <br/>
 
-Problem Statement can be found at https://www.cse.iitd.ac.in/~rijurekha/cop290_2021.html
+Complete Problem Statement can be found at this [link](https://www.cse.iitd.ac.in/~rijurekha/cop290_2021.html)
 
 ## Dependencies
 Make sure that `boost` and `opencv` libraries are installed in the system
